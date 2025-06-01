@@ -5,8 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * このプログラムは，任意のディレクトリに存在するファイル（）
@@ -14,46 +13,53 @@ import java.util.Scanner;
  */
 
 public class FileOrganizer {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("読み込みたいディレクトリの絶対パスを入力してください");
-        String originPath = scanner.nextLine();
-        System.out.println("保存先のディレクトリの絶対パスを入力してください");
-        String departurePath = scanner.nextLine();
+    private final static Scanner scanner = new Scanner(System.in);
+    private static File originDir;
+    private static File destDir;
 
-        //整理したいファイルが入っているディレクトリ
-        File originDir = new File(originPath);
+    public static void main(String[] args) {
+        FileOrganizer FileOrg = new FileOrganizer();
+        System.out.println("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+        FileOrg.originDir = setTargetDir();
+        System.out.println("保存先のディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+        FileOrg.destDir = setTargetDir();
+
         //「整理したいファイルが入っているディレクトリ」のファイルたちを配列にする
-        File[] children = originDir.listFiles();
+        List<File> files = null;
+        try {
+            files = createFileList(FileOrg.originDir);
+        }catch (RuntimeException e){
+            System.out.println("エラー：ディレクトをファイルとして読み込もうとしました");
+        }
+
         //保存先ディレクトリへ，ファイルをいくつコピーしたかをカウントする
         int counter = 0;
 
         //読み込み先のディレクトリ内に存在するファイルらに対して，処理をするfor文．
-        for(File file: children){
+        for(File file: files){
             if(file.isDirectory()) continue;
             //対象ファイルの作成日時を取得
-            Date pre_date = new Date(file.lastModified());
+            Date raw_date = new Date(file.lastModified());
             SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd/HH/mm/ss/SS");
             //↓ [0]:year,[1]:month,[2]:day,[3]:hour,[4]:minute,[5]:secondsに日付を分割
-            String[] dates = date.format(pre_date).split("/");
+            String[] dates = date.format(raw_date).split("/");
 
             //departure_dirに対象ファイルが作成された、年月日の名前のディレクトリがなかったらそのディレクトリを作る
-            if(!Files.exists(Paths.get(departurePath + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]))){
+            if(!Files.exists(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]))){
                 try { //一致するディレクトリが無かったら実行
-                    Files.createDirectories(Paths.get(departurePath + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]));
+                    Files.createDirectories(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
 
+            //名前を一意に決定するために，日時をファイルネームに追加する．
             String file_name =  dates[0] + ":" + dates[1] + ":" + dates[2] + ":" + dates[3] + "時" + dates[4] + "分" + dates[5]  + "秒";
-            //対象ファイルの絶対パスをPath型で定義
-            Path file_orign_path = Paths.get(originPath + "/" + file.getName());
-            //対象ファイルの移動先の絶対パスをPath型で定義
-            Path file_departurePath = Paths.get(departurePath + "/" + dates[0] + "/" + dates[1] + "/" + dates[2] + "/" + file_name + file.getName());
+            //対象ファイルのコピー先の絶対パスをPath型で定義
+            Path file_destPath = Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2] + "/" + file.getName() + "::" + file_name);
             try{
-                Files.copy(file_orign_path, file_departurePath);
-                file_departurePath.toFile().setLastModified(file.lastModified()); //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
+                Files.copy(file.getAbsoluteFile().toPath(), file_destPath);
+                file_destPath.toFile().setLastModified(file.lastModified()); //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
                 counter++;
             }catch (IOException e){
                 e.printStackTrace();
@@ -63,4 +69,45 @@ public class FileOrganizer {
         System.out.printf("%d個のデータをコピーして移動させました", counter);
 
     }
+
+    private static File setTargetDir(){
+        while (true){
+            String path = scanner.nextLine();
+
+            try {
+                File targetDir = new File(path);
+                if(targetDir.isDirectory()) {
+                    return targetDir;
+                }else{
+                    System.out.println("エラー：ディレクトリを指定してください\n");
+                }
+            }catch (NullPointerException e) {
+                System.out.println("エラー：存在しないパスです\n");
+            }
+        }
+    }
+
+    private static List<File> createFileList(File targetDir) throws RuntimeException{
+        // ディレクトリ以外のFile型が来たらエラーを投げる
+        if(! targetDir.isDirectory()) throw new RuntimeException();
+
+        //サブディレクトリ内のファイルも含むリスト．最終的にこのリストがreturnされる．
+        List<File> files = new ArrayList<>();
+
+        // 指定されたディレクトリ直下のファイルを含むリスト
+        List<File> tempFiles = Arrays.asList(targetDir.listFiles());
+
+        for(File file: tempFiles){
+            // サブディレクトリ内のファイルを取得できるように処理
+            if(file.isDirectory()){
+                files.addAll(createFileList(file));
+            }else{
+                files.add(file);
+            }
+        }
+        return files;
+    }
+
+
+
 }
