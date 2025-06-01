@@ -1,3 +1,6 @@
+./test
+./src/test_resource
+
 ### IntelliJ IDEA ###
 !**/src/main/**/out/
 !**/src/test/**/out/
