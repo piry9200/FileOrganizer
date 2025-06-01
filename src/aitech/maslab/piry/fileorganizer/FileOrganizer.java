@@ -53,11 +53,10 @@ public class FileOrganizer {
                 }
             }
 
+            //名前を一意に決定するために，日時をファイルネームに追加する．
             String file_name =  dates[0] + ":" + dates[1] + ":" + dates[2] + ":" + dates[3] + "時" + dates[4] + "分" + dates[5]  + "秒";
-            //対象ファイルの絶対パスをPath型で定義
-            //Path file_orign_path = Paths.get(originDir.getPath() + "/" + file.getName());
-            //対象ファイルの移動先の絶対パスをPath型で定義
-            Path file_destPath = Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2] + "/" + file_name + file.getName());
+            //対象ファイルのコピー先の絶対パスをPath型で定義
+            Path file_destPath = Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2] + "/" + file.getName() + "::" + file_name);
             try{
                 Files.copy(file.getAbsoluteFile().toPath(), file_destPath);
                 file_destPath.toFile().setLastModified(file.lastModified()); //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
