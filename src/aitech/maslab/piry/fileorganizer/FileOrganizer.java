@@ -32,6 +32,8 @@ public class FileOrganizer {
             System.out.println("エラー：ディレクトをファイルとして読み込もうとしました");
         }
 
+        //読み込み先にあるファイルの総数を取得する
+        int numFiles = files.size();
         //保存先ディレクトリへ，ファイルをいくつコピーしたかをカウントする
         int counter = 0;
 
@@ -57,6 +59,9 @@ public class FileOrganizer {
             String file_name =  dates[0] + ":" + dates[1] + ":" + dates[2] + ":" + dates[3] + "時" + dates[4] + "分" + dates[5]  + "秒";
             //対象ファイルのコピー先の絶対パスをPath型で定義
             Path file_destPath = Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2] + "/" + file.getName() + "::" + file_name);
+
+            System.out.printf("処理率 %.1f %% | %d/%d(処理済/総数) | 処理中→ %s \n", ((double)counter/(numFiles))*100, counter, numFiles, file.getName());
+
             try{
                 Files.copy(file.getAbsoluteFile().toPath(), file_destPath);
                 file_destPath.toFile().setLastModified(file.lastModified()); //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
@@ -64,7 +69,6 @@ public class FileOrganizer {
             }catch (IOException e){
                 e.printStackTrace();
             }
-            System.out.printf("%d個目のファイルを完了\n", counter);
         }
         System.out.printf("%d個のデータをコピーして移動させました", counter);
 
