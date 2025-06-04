@@ -19,10 +19,16 @@ public class FileOrganizer {
     private static File destDir;
 
     public static void main(String[] args) throws IOException {
-        System.out.println("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
-        originDir = setTargetDir();
-        System.out.println("保存先のディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
-        destDir = setTargetDir();
+        while (true){
+            System.out.println("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+            if(setOriginDir(scanner.nextLine())) break;
+        }
+
+        while (true) {
+            System.out.println("保存先ディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+            if(setDestDir(scanner.nextLine())) break;
+        }
+
 
         //「整理したいファイルが入っているディレクトリ」のファイルたちを配列にする
         try(Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())){
@@ -42,7 +48,7 @@ public class FileOrganizer {
                 //↓ [0]:year,[1]:month,[2]:day,[3]:hour,[4]:minute,[5]:secondsに日付を分割
                 String[] dates = date.format(raw_date).split("/");
 
-                //departure_dirに対象ファイルが作成された、年月日の名前のディレクトリがなかったらそのディレクトリを作る
+                //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
                 if(!Files.exists(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]))){
                     try { //一致するディレクトリが無かったら実行
                         Files.createDirectories(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]));
@@ -71,22 +77,36 @@ public class FileOrganizer {
         }
     }
 
-    private static File setTargetDir(){
-        while (true){
-            String path = scanner.nextLine();
-
-            try {
-                File targetDir = new File(path);
-                if(targetDir.isDirectory()) {
-                    return targetDir;
-                }else{
-                    System.out.println("エラー：ディレクトリを指定してください\n");
-                }
-            }catch (NullPointerException e) {
-                System.out.println("エラー：存在しないパスです\n");
+    private static boolean setOriginDir(String stringPath){
+        try {
+            Path path = Paths.get(stringPath);
+            if(Files.isDirectory(path)) {
+                originDir = new File(stringPath);
+                return true;
+            }else{
+                System.out.println("エラー：ディレクトリを指定してください\n");
+                return false;
             }
+        }catch (NullPointerException e) {
+            System.out.println("エラー：存在しないパスです\n");
+            return false;
         }
     }
 
+    private static boolean setDestDir(String stringPath){
+        try {
+            Path path = Paths.get(stringPath);
+            if(Files.isDirectory(path)) {
+                destDir = new File(stringPath);
+                return true;
+            }else{
+                System.out.println("エラー：ディレクトリを指定してください\n");
+                return false;
+            }
+        }catch (NullPointerException e) {
+            System.out.println("エラー：存在しないパスです\n");
+            return false;
+        }
+    }
 
 }
