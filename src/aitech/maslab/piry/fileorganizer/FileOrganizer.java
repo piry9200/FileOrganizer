@@ -14,16 +14,23 @@ import java.util.stream.Stream;
  */
 
 public class FileOrganizer {
-    private final static Scanner scanner = new Scanner(System.in);
-    private static File originDir;
-    private static File destDir;
+    private File originDir;
+    private File destDir;
 
-    public static void main(String[] args) throws IOException {
-        System.out.println("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
-        originDir = setTargetDir();
-        System.out.println("保存先のディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
-        destDir = setTargetDir();
+    FileOrganizer(File originDir, File destDir){
+        setOriginDir(originDir);
+        setDestDir(destDir);
+    }
 
+    public void setOriginDir(File originDir){
+        this.originDir = originDir;
+    }
+
+    public void setDestDir(File destDir) {
+        this.destDir = destDir;
+    }
+
+    public void organizeFiles() throws IOException{
         //「整理したいファイルが入っているディレクトリ」のファイルたちを配列にする
         try(Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())){
             List<Path> filePathsList = filePathsStream.filter(Files::isRegularFile).toList();
@@ -42,7 +49,7 @@ public class FileOrganizer {
                 //↓ [0]:year,[1]:month,[2]:day,[3]:hour,[4]:minute,[5]:secondsに日付を分割
                 String[] dates = date.format(raw_date).split("/");
 
-                //departure_dirに対象ファイルが作成された、年月日の名前のディレクトリがなかったらそのディレクトリを作る
+                //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
                 if(!Files.exists(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]))){
                     try { //一致するディレクトリが無かったら実行
                         Files.createDirectories(Paths.get(destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2]));
@@ -68,25 +75,46 @@ public class FileOrganizer {
             }
             System.out.printf("%d個のデータをコピーして移動させました", counter);
 
+        }catch (IOException e){
+            throw e;
         }
     }
 
-    private static File setTargetDir(){
-        while (true){
-            String path = scanner.nextLine();
+    public static void main(String[] args) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        File originDir;
+        File destDir;
 
-            try {
-                File targetDir = new File(path);
-                if(targetDir.isDirectory()) {
-                    return targetDir;
-                }else{
-                    System.out.println("エラー：ディレクトリを指定してください\n");
-                }
-            }catch (NullPointerException e) {
-                System.out.println("エラー：存在しないパスです\n");
+        while (true){
+            System.out.print("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+            String originDirPath = scanner.nextLine();
+            if(FileOrgUtil.isExistDir(originDirPath)){
+                originDir = new File(originDirPath);
+                break;
+            }else{
+                System.out.println("エラー：そのパスはディレクトリではありません\n");
             }
         }
+
+        while (true){
+            System.out.print("保存先のディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
+            String destDirPath = scanner.nextLine();
+            if(FileOrgUtil.isExistDir(destDirPath)){
+                destDir = new File(destDirPath);
+                break;
+            }else{
+                System.out.println("エラー：そのパスはディレクトリではありません\n");
+            }
+        }
+
+        var fileOrg = new FileOrganizer(originDir, destDir);
+
+        try{
+            fileOrg.organizeFiles();
+        }catch (IOException e){
+            System.out.println("ファイルのコピー中にエラーが生じました");
+            System.out.println(e);
+        }
+
     }
-
-
 }
