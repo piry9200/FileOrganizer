@@ -62,7 +62,7 @@ public class FileOrganizer {
 
                 //名前を一意に決定するために，日時をファイルネームに追加する．
                 String fileDateStr = dates[3] + "時" + dates[4] + "分" + dates[5] + "秒";
-                String fileName = file.getName() + "::" + destSubDirStr + ":" + fileDateStr ;
+                String fileName = file.getName() + "::" + fileDateStr ;
                 //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
                 Path fileDestPath = Paths.get(destSubDirStr + "/" + fileName);
 
