@@ -14,12 +14,18 @@ import java.util.stream.Stream;
  */
 
 public class FileOrganizer {
+    public static final String DEFAULT_FILE_NAME_FORMAT = "%2d時%2分%2秒::%s";
+    private String fileNameFormat = DEFAULT_FILE_NAME_FORMAT;
     private File originDir;
     private File destDir;
 
     public FileOrganizer(File originDir, File destDir) {
         setOriginDir(originDir);
         setDestDir(destDir);
+    }
+
+    public void setFileNameFormat(String file_name_format) {
+        this.fileNameFormat = file_name_format;
     }
 
     public void setOriginDir(File originDir) {
@@ -30,49 +36,54 @@ public class FileOrganizer {
         this.destDir = destDir;
     }
 
+    // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
+    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters){
+        SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
+        final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
+        final Path destSubDirPath = Paths.get(destSubDirStr);
+
+        //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
+        if (!Files.exists(destSubDirPath)) {
+            try { //一致するディレクトリが無かったら実行
+                Files.createDirectories(destSubDirPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return destSubDirPath;
+    }
+
     public void organizeFiles() throws IOException {
         //「整理したいファイルが入っているディレクトリ」のファイルたちを配列にする
-        try (Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())) {
-            List<Path> filePathsList = filePathsStream.filter(Files::isRegularFile).toList();
+        try (final Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())) {
+            final List<Path> filePathsList = filePathsStream.filter(Files::isRegularFile).toList();
 
             //読み込み先にあるファイルの総数を取得する
-            int numFiles = filePathsList.size();
+            final int numFiles = filePathsList.size();
             //保存先ディレクトリへ，ファイルをいくつコピーしたかをカウントする
             int counter = 0;
 
             //読み込み先のディレクトリ内に存在するファイルらに対して，処理をするfor文．
-            for (Path filePath : filePathsList) {
-                File file = new File(filePath.toString());
-                //対象ファイルの作成日時を取得
-                Date raw_date = new Date(file.lastModified());
-                SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd/HH/mm/ss/SS");
-                //↓ [0]:year,[1]:month,[2]:day,[3]:hour,[4]:minute,[5]:secondsに日付を分割
-                String[] dates = date.format(raw_date).split("/");
-                String destSubDirStr = destDir.getPath() + "/" + dates[0] + "/" + dates[1] + "/" + dates[2];
-                Path destSubDirPath = Paths.get(destSubDirStr);
+            for (final Path filePath : filePathsList) {
+                final FileArgs fileArgs = new FileArgs(filePath);
+                //各ファイルを配置するためのディレクトリのパスを取得
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), SubDirDateFormatters.YEAR_MONTH_WEEK);
 
-                //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
-                if (!Files.exists(destSubDirPath)) {
-                    try { //一致するディレクトリが無かったら実行
-                        Files.createDirectories(destSubDirPath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                //名前を一意に決定するために，日時をファイルネームに追加する．
-                String fileDateStr = dates[3] + "時" + dates[4] + "分" + dates[5] + "秒";
-                String fileName = file.getName() + "::" + fileDateStr ;
+                //名前を一意に決定するために，作成された時間をファイルネームに追加する．
+                SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
+                final String fileDateStr = fileNameDateFormat.format(fileArgs.fileCl.getTime());
+                final String fileName =  fileDateStr + "::" + fileArgs.file.getName();
                 //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
-                Path fileDestPath = Paths.get(destSubDirStr + "/" + fileName);
+                final Path fileDestPath = Paths.get(destSubDirPath.toString() + "/" + fileName);
 
                 System.out.printf("処理率 %.1f %% | %d/%d(処理済/総数) | 処理中→ %s \n",
-                        ((double) counter / (numFiles)) * 100, counter, numFiles, file.getName());
+                        ((double) counter / (numFiles)) * 100, counter, numFiles, fileArgs.file.getName());
 
                 try {
-                    Files.copy(file.getAbsoluteFile().toPath(), fileDestPath);
+                    Files.copy(fileArgs.file.getAbsoluteFile().toPath(), fileDestPath);
                     //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
-                    fileDestPath.toFile().setLastModified(file.lastModified());
+                    fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
                     counter++;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -85,14 +96,40 @@ public class FileOrganizer {
         }
     }
 
+    private class FileArgs {
+        final File file;
+        final Calendar fileCl;
+        String fileName;
+        public FileArgs(Path filePath) {
+            this.file = new File(filePath.toString());
+            this.fileName = this.file.getName();
+            Date fileDate = new Date(this.file.lastModified());
+            this.fileCl = Calendar.getInstance(TimeZone.getTimeZone("JST"));
+            this.fileCl.setTime(fileDate);
+        }
+    }
+
+    public enum SubDirDateFormatters {
+        YEAR_MONTH_DAY("yyyy/MM/dd"),
+        YEAR_MONTH_WEEK("yyyy/MM/第W週");
+        private final SimpleDateFormat dateFormatter;
+        private SubDirDateFormatters(String format) {
+            this.dateFormatter = new SimpleDateFormat(format);
+        }
+
+        public SimpleDateFormat getDateFormatter() {
+            return dateFormatter;
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        File originDir;
-        File destDir;
+        final Scanner scanner = new Scanner(System.in);
+        final File originDir;
+        final File destDir;
 
         while (true) {
             System.out.print("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
-            String originDirPath = scanner.nextLine();
+            final String originDirPath = scanner.nextLine();
             if (FileOrgUtil.isExistDir(originDirPath)) {
                 originDir = new File(originDirPath);
                 break;
@@ -112,7 +149,7 @@ public class FileOrganizer {
             }
         }
 
-        var fileOrg = new FileOrganizer(originDir, destDir);
+        final var fileOrg = new FileOrganizer(originDir, destDir);
 
         try {
             fileOrg.organizeFiles();

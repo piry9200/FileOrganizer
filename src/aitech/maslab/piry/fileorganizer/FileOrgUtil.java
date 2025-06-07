@@ -9,7 +9,7 @@ public class FileOrgUtil {
 
     public static boolean isExistDir(String dirPath){
         try {
-            Path path = Paths.get(dirPath);
+            final Path path = Paths.get(dirPath);
             if(Files.isDirectory(path)) {
                 return true;
             }else{
