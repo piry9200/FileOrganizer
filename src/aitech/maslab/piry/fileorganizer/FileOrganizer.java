@@ -36,9 +36,10 @@ public class FileOrganizer {
         this.destDir = destDir;
     }
 
-    // dir 下に date で指定されて年・月・時間別にディレクトリをのパスを返す．無ければ作成する．
-    private Path getOrCreateSubDirPath(File dir, Date date, SimpleDateFormat subDirDateFormat){
-        final String destSubDirStr = dir.getPath() + "/" + subDirDateFormat.format(date);
+    // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
+    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters){
+        SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
+        final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
 
         //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
@@ -67,8 +68,7 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //各ファイルを配置するためのディレクトリのパスを取得
-                final SimpleDateFormat subDirDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-                Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), subDirDateFormat);
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), SubDirDateFormatters.YEAR_MONTH_WEEK);
 
                 //名前を一意に決定するために，作成された時間をファイルネームに追加する．
                 SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
@@ -106,6 +106,19 @@ public class FileOrganizer {
             Date fileDate = new Date(this.file.lastModified());
             this.fileCl = Calendar.getInstance(TimeZone.getTimeZone("JST"));
             this.fileCl.setTime(fileDate);
+        }
+    }
+
+    public enum SubDirDateFormatters {
+        YEAR_MONTH_DAY("yyyy/MM/dd"),
+        YEAR_MONTH_WEEK("yyyy/MM/第W週");
+        private final SimpleDateFormat dateFormatter;
+        private SubDirDateFormatters(String format) {
+            this.dateFormatter = new SimpleDateFormat(format);
+        }
+
+        public SimpleDateFormat getDateFormatter() {
+            return dateFormatter;
         }
     }
 
