@@ -37,9 +37,8 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定されて年・月・時間別にディレクトリをのパスを返す．無ければ作成する．
-    private Path getOrCreateSubDirPath(File dir, Date date){
-        final SimpleDateFormat subDirDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        final String destSubDirStr = dir.getPath() + subDirDateFormat.format(date);
+    private Path getOrCreateSubDirPath(File dir, Date date, SimpleDateFormat subDirDateFormat){
+        final String destSubDirStr = dir.getPath() + "/" + subDirDateFormat.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
 
         //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
@@ -68,7 +67,8 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //各ファイルを配置するためのディレクトリのパスを取得
-                Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime());
+                final SimpleDateFormat subDirDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), subDirDateFormat);
 
                 //名前を一意に決定するために，作成された時間をファイルネームに追加する．
                 SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
