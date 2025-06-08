@@ -82,7 +82,7 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //ファイルを配置するためのdestDir下のサブディレクトリのパスを取得あるいは作成
-                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs, this.subDirFormatter);
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs);
                 copyFileToSubDir(destSubDirPath, fileArgs);
 
                 System.out.printf("処理率 %.1f %% | %d/%d(処理済/総数) | 処理中→ %s \n",
@@ -112,9 +112,9 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs, SubDirFormatters subDirFormatters) throws IOException {
+    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs) throws IOException {
         Date date = fileArgs.fileCl.getTime();
-        SimpleDateFormat formatter = subDirFormatters.getSubDirFormatter();
+        SimpleDateFormat formatter = this.subDirFormatter.getSubDirFormatter();
         final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
 
