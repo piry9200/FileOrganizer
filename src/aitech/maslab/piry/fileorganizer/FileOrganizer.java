@@ -14,18 +14,13 @@ import java.util.stream.Stream;
  */
 
 public class FileOrganizer {
-    public static final String DEFAULT_FILE_NAME_FORMAT = "%2d時%2分%2秒::%s";
-    private String fileNameFormat = DEFAULT_FILE_NAME_FORMAT;
     private File originDir;
     private File destDir;
+    private SubDirDateFormatters subDirDateFormatter = SubDirDateFormatters.YEAR_MONTH_DAY;
 
     public FileOrganizer(File originDir, File destDir) {
         setOriginDir(originDir);
         setDestDir(destDir);
-    }
-
-    public void setFileNameFormat(String file_name_format) {
-        this.fileNameFormat = file_name_format;
     }
 
     public void setOriginDir(File originDir) {
@@ -36,22 +31,22 @@ public class FileOrganizer {
         this.destDir = destDir;
     }
 
-    // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters){
-        SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
-        final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
-        final Path destSubDirPath = Paths.get(destSubDirStr);
+    public void setSubDirDateFormatters(SubDirDateFormatters subDirDateFormatters) {
+        this.subDirDateFormatter = subDirDateFormatters;
+    }
 
-        //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
-        if (!Files.exists(destSubDirPath)) {
-            try { //一致するディレクトリが無かったら実行
-                Files.createDirectories(destSubDirPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public enum SubDirDateFormatters {
+        YEAR_MONTH_DAY("yyyy/MM/dd"),
+        YEAR_MONTH_WEEK("yyyy/MM/第W週");
+        private final SimpleDateFormat dateFormatter;
+
+        private SubDirDateFormatters(String format) {
+            this.dateFormatter = new SimpleDateFormat(format);
         }
 
-        return destSubDirPath;
+        public SimpleDateFormat getDateFormatter() {
+            return dateFormatter;
+        }
     }
 
     public void organizeFiles() throws IOException {
@@ -68,12 +63,12 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //各ファイルを配置するためのディレクトリのパスを取得
-                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), SubDirDateFormatters.YEAR_MONTH_WEEK);
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), this.subDirDateFormatter);
 
                 //名前を一意に決定するために，作成された時間をファイルネームに追加する．
-                SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
+                final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
                 final String fileDateStr = fileNameDateFormat.format(fileArgs.fileCl.getTime());
-                final String fileName =  fileDateStr + "::" + fileArgs.file.getName();
+                final String fileName = fileDateStr + "::" + fileArgs.file.getName();
                 //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
                 final Path fileDestPath = Paths.get(destSubDirPath.toString() + "/" + fileName);
 
@@ -100,6 +95,7 @@ public class FileOrganizer {
         final File file;
         final Calendar fileCl;
         String fileName;
+
         public FileArgs(Path filePath) {
             this.file = new File(filePath.toString());
             this.fileName = this.file.getName();
@@ -109,17 +105,22 @@ public class FileOrganizer {
         }
     }
 
-    public enum SubDirDateFormatters {
-        YEAR_MONTH_DAY("yyyy/MM/dd"),
-        YEAR_MONTH_WEEK("yyyy/MM/第W週");
-        private final SimpleDateFormat dateFormatter;
-        private SubDirDateFormatters(String format) {
-            this.dateFormatter = new SimpleDateFormat(format);
+    // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
+    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters) {
+        SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
+        final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
+        final Path destSubDirPath = Paths.get(destSubDirStr);
+
+        //departure_dirに，対象ファイルが作成された年月日の名前のディレクトリがなかったらそのディレクトリを作る
+        if (!Files.exists(destSubDirPath)) {
+            try { //一致するディレクトリが無かったら実行
+                Files.createDirectories(destSubDirPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        public SimpleDateFormat getDateFormatter() {
-            return dateFormatter;
-        }
+        return destSubDirPath;
     }
 
     public static void main(String[] args) throws IOException {
