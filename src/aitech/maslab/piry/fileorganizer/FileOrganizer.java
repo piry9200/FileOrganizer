@@ -31,21 +31,21 @@ public class FileOrganizer {
         this.destDir = destDir;
     }
 
-    public void setSubDirFormatters(SubDirFormatters subDirDateFormatters) {
-        this.subDirFormatter = subDirDateFormatters;
+    public void setSubDirFormatters(SubDirFormatters subDirFormatters) {
+        this.subDirFormatter = subDirFormatters;
     }
 
     public enum SubDirFormatters {
         YEAR_MONTH_DAY("yyyy/MM/dd"),
         YEAR_MONTH_WEEK("yyyy/MM/第W週");
-        private final SimpleDateFormat dateFormatter;
+        private final SimpleDateFormat subDirFormatter;
 
         private SubDirFormatters(String format) {
-            this.dateFormatter = new SimpleDateFormat(format);
+            this.subDirFormatter = new SimpleDateFormat(format);
         }
 
-        public SimpleDateFormat getDateFormatter() {
-            return dateFormatter;
+        public SimpleDateFormat getSubDirFormatter() {
+            return subDirFormatter;
         }
     }
 
@@ -93,9 +93,9 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs, SubDirFormatters subDirDateFormatters) throws IOException {
+    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs, SubDirFormatters subDirFormatters) throws IOException {
         Date date = fileArgs.fileCl.getTime();
-        SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
+        SimpleDateFormat formatter = subDirFormatters.getSubDirFormatter();
         final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
 
