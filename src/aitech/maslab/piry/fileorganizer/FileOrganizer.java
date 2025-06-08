@@ -63,7 +63,7 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //各ファイルを配置するためのディレクトリのパスを取得
-                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs.fileCl.getTime(), this.subDirDateFormatter);
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs, this.subDirDateFormatter);
 
                 //名前を一意に決定するために，作成された時間をファイルネームに追加する．
                 final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
@@ -107,7 +107,8 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters) throws IOException {
+    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs, SubDirDateFormatters subDirDateFormatters) throws IOException {
+        Date date = fileArgs.fileCl.getTime();
         SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
         final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
