@@ -62,28 +62,14 @@ public class FileOrganizer {
             //読み込み先のディレクトリ内に存在するファイルらに対して，処理をするfor文．
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
-                //各ファイルを配置するためのディレクトリのパスを取得
+                //ファイルを配置するためのdestDir下のサブディレクトリのパスを取得あるいは作成
                 final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs, this.subDirDateFormatter);
-
-                //名前を一意に決定するために，作成された時間をファイルネームに追加する．
-                final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
-                final String fileDateStr = fileNameDateFormat.format(fileArgs.fileCl.getTime());
-                final String fileName = fileDateStr + "::" + fileArgs.file.getName();
-                //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
-                final Path fileDestPath = Paths.get(destSubDirPath.toString() + "/" + fileName);
+                copyFileToSubDir(destSubDirPath, fileArgs);
 
                 System.out.printf("処理率 %.1f %% | %d/%d(処理済/総数) | 処理中→ %s \n",
                         ((double) counter / (numFiles)) * 100, counter, numFiles, fileArgs.file.getName());
 
-                try {
-                    Files.copy(fileArgs.file.getAbsoluteFile().toPath(), fileDestPath);
-                    //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
-                    fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
-                    counter++;
-                } catch (IOException e) {
-                    System.out.println("エラー：データをコピーする際にエラーが生じました");
-                    e.printStackTrace();
-                }
+                counter++;
             }
             System.out.printf("%d個のデータをコピーして移動させました", counter);
 
@@ -124,6 +110,24 @@ public class FileOrganizer {
         }
 
         return destSubDirPath;
+    }
+
+    private void copyFileToSubDir(Path destSubDirPath, FileArgs fileArgs) throws IOException{
+        //名前を一意に決定するために，作成された時間をファイルネームに追加する．
+        final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
+        final String fileDateStr = fileNameDateFormat.format(fileArgs.fileCl.getTime());
+        final String fileName = fileDateStr + "::" + fileArgs.file.getName();
+        //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
+        final Path fileDestPath = Paths.get(destSubDirPath.toString() + "/" + fileName);
+
+        try {
+            Files.copy(fileArgs.file.getAbsoluteFile().toPath(), fileDestPath);
+            //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
+            fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
+        } catch (IOException e) {
+            System.out.println("エラー：データをコピーする際にエラーが生じました");
+            throw e;
+        }
     }
 
     public static void main(String[] args) throws IOException {
