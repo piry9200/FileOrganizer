@@ -68,8 +68,7 @@ public class FileOrganizer {
         }
     }
 
-    public void organizeFiles() throws IOException {
-        //「整理したいファイルが入っているディレクトリ」のファイルたちを配列にする
+    public void organizeFiles() {
         try (final Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())) {
             final List<Path> filePathsList = filePathsStream.filter(Files::isRegularFile).toList();
 
@@ -93,7 +92,9 @@ public class FileOrganizer {
             System.out.printf("%d個のデータをコピーして移動させました", counter);
 
         } catch (IOException e) {
-            throw e;
+            System.out.println(e);
+            System.out.println("エラー：ファイルを読み込めませんでした．プログラムを終了します．");
+            System.exit(1);
         }
     }
 
@@ -112,7 +113,7 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs) throws IOException {
+    private Path getOrCreateSubDirPath(File dir, FileArgs fileArgs){
         Date date = fileArgs.fileCl.getTime();
         SimpleDateFormat formatter = this.subDirFormatter.getSubDirFormatter();
         final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
@@ -123,8 +124,8 @@ public class FileOrganizer {
             try { //一致するディレクトリが無かったら実行
                 Files.createDirectories(destSubDirPath);
             } catch (IOException e) {
-                System.out.println("エラー：サブディレクトリを作成する際にエラーが維持ました");
-                throw e;
+                System.out.printf("エラー：%sを保存するサブディレクトリを作成する際に以下のエラーが生じました\n", fileArgs.fileName);
+                System.out.println(e);
             }
         }
 
@@ -144,12 +145,12 @@ public class FileOrganizer {
             //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
             fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
         } catch (IOException e) {
-            System.out.println("エラー：データをコピーする際にエラーが生じました");
-            throw e;
+            System.out.printf("エラー：%s を %s へコピーする際に以下のエラーが生じました", fileArgs.fileName, destSubDirPath.toString());
+            System.out.println(e);
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         final Scanner scanner = new Scanner(System.in);
         final File originDir;
         final File destDir;
@@ -178,12 +179,7 @@ public class FileOrganizer {
 
         final var fileOrg = new FileOrganizer(originDir, destDir);
 
-        try {
-            fileOrg.organizeFiles();
-        } catch (IOException e) {
-            System.out.println("ファイルのコピー中にエラーが生じました");
-            System.out.println(e);
-        }
+        fileOrg.organizeFiles();
 
     }
 }
