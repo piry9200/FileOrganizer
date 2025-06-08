@@ -81,6 +81,7 @@ public class FileOrganizer {
                     fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
                     counter++;
                 } catch (IOException e) {
+                    System.out.println("エラー：データをコピーする際にエラーが生じました");
                     e.printStackTrace();
                 }
             }
@@ -106,7 +107,7 @@ public class FileOrganizer {
     }
 
     // dir 下に date で指定された日時情報を用いてサブディレクトを取得または作成する．そのサブディレクトの構造はenumである「SubDirDateFormatters」で指定する．
-    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters) {
+    private Path getOrCreateSubDirPath(File dir, Date date, SubDirDateFormatters subDirDateFormatters) throws IOException {
         SimpleDateFormat formatter = subDirDateFormatters.getDateFormatter();
         final String destSubDirStr = dir.getPath() + "/" + formatter.format(date);
         final Path destSubDirPath = Paths.get(destSubDirStr);
@@ -116,7 +117,8 @@ public class FileOrganizer {
             try { //一致するディレクトリが無かったら実行
                 Files.createDirectories(destSubDirPath);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("エラー：サブディレクトリを作成する際にエラーが維持ました");
+                throw e;
             }
         }
 
