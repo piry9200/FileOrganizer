@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 public class FileOrganizer {
     private File originDir;
     private File destDir;
-    private SubDirFormatters subDirDateFormatter = SubDirFormatters.YEAR_MONTH_DAY;
+    private SubDirFormatters subDirFormatter = SubDirFormatters.YEAR_MONTH_DAY;
 
     public FileOrganizer(File originDir, File destDir) {
         setOriginDir(originDir);
@@ -32,7 +32,7 @@ public class FileOrganizer {
     }
 
     public void setSubDirFormatters(SubDirFormatters subDirDateFormatters) {
-        this.subDirDateFormatter = subDirDateFormatters;
+        this.subDirFormatter = subDirDateFormatters;
     }
 
     public enum SubDirFormatters {
@@ -63,7 +63,7 @@ public class FileOrganizer {
             for (final Path filePath : filePathsList) {
                 final FileArgs fileArgs = new FileArgs(filePath);
                 //ファイルを配置するためのdestDir下のサブディレクトリのパスを取得あるいは作成
-                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs, this.subDirDateFormatter);
+                final Path destSubDirPath = getOrCreateSubDirPath(destDir, fileArgs, this.subDirFormatter);
                 copyFileToSubDir(destSubDirPath, fileArgs);
 
                 System.out.printf("処理率 %.1f %% | %d/%d(処理済/総数) | 処理中→ %s \n",
