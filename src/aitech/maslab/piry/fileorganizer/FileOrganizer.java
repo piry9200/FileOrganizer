@@ -17,6 +17,7 @@ public class FileOrganizer {
     private File originDir;
     private File destDir;
     private SubDirFormatters subDirFormatter = SubDirFormatters.YEAR_MONTH_DAY;
+    private FileNameFormatters fileNameFormatter = FileNameFormatters.HOUR_MINUTE_SECOND;
 
     public FileOrganizer(File originDir, File destDir) {
         setOriginDir(originDir);
@@ -35,6 +36,10 @@ public class FileOrganizer {
         this.subDirFormatter = subDirFormatters;
     }
 
+    public void setFileNameFormatter(FileNameFormatters fileNameFormatter) {
+        this.fileNameFormatter = fileNameFormatter;
+    }
+
     public enum SubDirFormatters {
         YEAR_MONTH_DAY("yyyy/MM/dd"),
         YEAR_MONTH_WEEK("yyyy/MM/第W週");
@@ -46,6 +51,20 @@ public class FileOrganizer {
 
         public SimpleDateFormat getSubDirFormatter() {
             return subDirFormatter;
+        }
+    }
+
+    public enum FileNameFormatters {
+        HOUR_MINUTE_SECOND("hh時mm分ss秒::"),
+        NONE("");
+        private final SimpleDateFormat fileNameFormatter;
+
+        private FileNameFormatters(String format) {
+            this.fileNameFormatter = new SimpleDateFormat(format);
+        }
+
+        public SimpleDateFormat getFileNameFormatter() {
+            return fileNameFormatter;
         }
     }
 
@@ -114,9 +133,9 @@ public class FileOrganizer {
 
     private void copyFileToSubDir(Path destSubDirPath, FileArgs fileArgs) throws IOException{
         //名前を一意に決定するために，作成された時間をファイルネームに追加する．
-        final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("hh時mm分ss秒");
-        final String fileDateStr = fileNameDateFormat.format(fileArgs.fileCl.getTime());
-        final String fileName = fileDateStr + "::" + fileArgs.file.getName();
+        SimpleDateFormat formatter = this.fileNameFormatter.getFileNameFormatter();
+        final String fileDateStr = formatter.format(fileArgs.fileCl.getTime());
+        final String fileName = fileDateStr + fileArgs.file.getName();
         //対象ファイルのコピー先の絶対パスをPath型で定義(ファイル名の例 neko)
         final Path fileDestPath = Paths.get(destSubDirPath.toString() + "/" + fileName);
 
