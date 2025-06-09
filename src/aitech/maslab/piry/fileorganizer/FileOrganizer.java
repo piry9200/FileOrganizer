@@ -10,36 +10,60 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * このプログラムは，任意のディレクトリに存在するファイル（）
+ * このプログラムは，任意のディレクトリに存在するファイルを他のファイルに
+ * 日付別に分類するクラス
  */
-
 public class FileOrganizer {
     private File originDir;
     private File destDir;
     private SubDirFormatters subDirFormatter = SubDirFormatters.YEAR_MONTH_DAY;
     private FileNameFormatters fileNameFormatter = FileNameFormatters.HOUR_MINUTE_SECOND;
 
+    /**
+     *　コンストラクタ
+     * @param originDir:読み込み先のディレクトリを表すFile型
+     * @param destDir:保存先のディレクトリを表すFile型
+     */
     public FileOrganizer(File originDir, File destDir) {
         setOriginDir(originDir);
         setDestDir(destDir);
     }
 
+    /**
+     * this.originDirのSetter
+     * @param originDir
+     */
     public void setOriginDir(File originDir) {
         this.originDir = originDir;
     }
 
+    /**
+     * this.destDirのSetter
+     * @param destDir
+     */
     public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
 
-    public void setSubDirFormatters(SubDirFormatters subDirFormatters) {
-        this.subDirFormatter = subDirFormatters;
+    /**
+     * this.subDirFormatterのSetter
+     * @param subDirFormatter
+     */
+    public void setSubDirFormatters(SubDirFormatters subDirFormatter) {
+        this.subDirFormatter = subDirFormatter;
     }
 
+    /**
+     * this.fileNameFormatterのSetter
+     * @param fileNameFormatter
+     */
     public void setFileNameFormatter(FileNameFormatters fileNameFormatter) {
         this.fileNameFormatter = fileNameFormatter;
     }
 
+    /**
+     * 保存先に生成するサブディレクトリの構造を定義する定数を管理
+     */
     public enum SubDirFormatters {
         YEAR_MONTH_DAY("yyyy/MM/dd"),
         YEAR_MONTH_WEEK("yyyy/MM/第W週");
@@ -54,6 +78,9 @@ public class FileOrganizer {
         }
     }
 
+    /**
+     * コピーするファイルのファイル名に加える情報を設定する定数を管理
+     */
     public enum FileNameFormatters {
         HOUR_MINUTE_SECOND("hh時mm分ss秒::"),
         NONE("");
@@ -68,6 +95,12 @@ public class FileOrganizer {
         }
     }
 
+    /**
+     * ファイルの分類を実行するメソッド．
+     * 呼び出すことで，フィールド変数に登録した「読み込み先ディレクトリ」，「保存先ディレクトリ」，
+     * 「保存するサブディレクトリの構造」，「ファイル名の設定」に従って
+     * 処理を実行する．
+     */
     public void organizeFiles() {
         try (final Stream<Path> filePathsStream = Files.walk(originDir.toPath().toAbsolutePath())) {
             final List<Path> filePathsList = filePathsStream.filter(Files::isRegularFile).toList();
