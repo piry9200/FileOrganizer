@@ -19,6 +19,7 @@ public class FileOrganizer {
     private SubDirFormatters subDirFormatter = SubDirFormatters.YEAR_MONTH_DAY;
     private FileNameFormatters fileNameFormatter = FileNameFormatters.HOUR_MINUTE_SECOND;
 
+    // test
     /**
      *　コンストラクタ
      * @param originDir:読み込み先のディレクトリを表すFile型
