@@ -10,8 +10,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * このプログラムは，任意のディレクトリに存在するファイルを他のファイルに
- * 日付別に分類するクラス
+ * FileOrganizerは，任意のディレクトリに存在するファイルを他のファイルに
+ * 日付別に分類する機能を提供するクラスである．
  */
 public class FileOrganizer {
     private File originDir;
@@ -126,8 +126,8 @@ public class FileOrganizer {
             System.out.printf("%d個のデータをコピーして移動させました", counter);
 
         } catch (IOException e) {
-            System.out.println(e);
-            System.out.println("エラー：ファイルを読み込めませんでした．プログラムを終了します．");
+            System.err.println("エラー：ファイルを読み込めませんでした．プログラムを終了します．");
+            System.err.println(e);
             System.exit(1);
         }
     }
@@ -158,8 +158,8 @@ public class FileOrganizer {
             try { //一致するディレクトリが無かったら実行
                 Files.createDirectories(destSubDirPath);
             } catch (IOException e) {
-                System.out.printf("エラー：%sを保存するサブディレクトリを作成する際に以下のエラーが生じました\n", fileArgs.fileName);
-                System.out.println(e);
+                System.err.printf("エラー：%sを保存するサブディレクトリを作成する際に以下のエラーが生じました\n", fileArgs.fileName);
+                System.err.println(e);
             }
         }
 
@@ -179,8 +179,8 @@ public class FileOrganizer {
             //コピーした時間が最終更新時間になってしまうので、元ファイルの最終更新日時をセットする
             fileDestPath.toFile().setLastModified(fileArgs.file.lastModified());
         } catch (IOException e) {
-            System.out.printf("エラー：%s を %s へコピーする際に以下のエラーが生じました", fileArgs.fileName, destSubDirPath.toString());
-            System.out.println(e);
+            System.err.printf("エラー：%s を %s へコピーする際に以下のエラーが生じました", fileArgs.fileName, destSubDirPath.toString());
+            System.err.println(e);
         }
     }
 
@@ -196,7 +196,7 @@ public class FileOrganizer {
                 originDir = new File(originDirPath);
                 break;
             } else {
-                System.out.println("エラー：そのパスはディレクトリではありません\n");
+                System.err.println("エラー：そのパスはディレクトリではありません\n");
             }
         }
 
@@ -207,7 +207,7 @@ public class FileOrganizer {
                 destDir = new File(destDirPath);
                 break;
             } else {
-                System.out.println("エラー：そのパスはディレクトリではありません\n");
+                System.err.println("エラー：そのパスはディレクトリではありません\n");
             }
         }
 
