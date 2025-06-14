@@ -54,7 +54,7 @@ public class FileOrganizer {
      * this.subDirFormatterのSetter
      * @param subDirFormatter
      */
-    public void setSubDirFormatters(SubDirFormatters subDirFormatter) {
+    public void setSubDirFormatter(SubDirFormatters subDirFormatter) {
         this.subDirFormatter = subDirFormatter;
     }
 
@@ -194,13 +194,14 @@ public class FileOrganizer {
         final File destDir;
 
         while (true) {
+            System.out.println();
             System.out.print("読み込みたいディレクトリの絶対パスを入力してください(「control+c」で中断)： ");
             final String originDirPath = scanner.nextLine();
             if (FileOrgUtil.isExistDir(originDirPath)) {
                 originDir = new File(originDirPath);
                 break;
             } else {
-                System.err.println("エラー：そのパスはディレクトリではありません\n");
+                System.out.println("入力されたパスはディレクトリではありません\n");
             }
         }
 
@@ -211,11 +212,52 @@ public class FileOrganizer {
                 destDir = new File(destDirPath);
                 break;
             } else {
-                System.err.println("エラー：そのパスはディレクトリではありません\n");
+                System.out.println("入力されたパスはディレクトリではありません\n");
             }
         }
 
+
         final var fileOrg = new FileOrganizer(originDir, destDir);
+
+        while (true) {
+            System.out.println();
+            System.out.println("ディレクトリの分け方の選択");
+            System.out.println("------------------------選択肢------------------------");
+            System.out.println("    -「1」を入力： 『年 / 月 / 日』 別にファイルを保存する");
+            System.out.println("    -「2」を入力： 『年 / 月 / 第n週』 別にファイルを保存する");
+            System.out.println("------------------------------------------------------");
+            System.out.print("ディレクトリの分け方を選択してください(「control+c」で中断)：");
+            String saveOption = scanner.nextLine();
+            if (saveOption.equals("1")) {
+                fileOrg.setSubDirFormatter(FileOrganizer.SubDirFormatters.YEAR_MONTH_DAY);
+                break;
+            } else if (saveOption.equals("2")) {
+                fileOrg.setSubDirFormatter(FileOrganizer.SubDirFormatters.YEAR_MONTH_WEEK);
+                break;
+            } else {
+                System.out.println("半角数字で 「1」or「2」 を入力してください\n");
+            }
+        }
+
+        while (true) {
+            System.out.println();
+            System.out.println("ファイル命名規則の選択");
+            System.out.println("------------------------選択肢------------------------");
+            System.out.println("    -「1」を入力： 『<元のファイル名>』");
+            System.out.println("    -「2」を入力： 『hh時mm分ss秒::<下のファイル名>』");
+            System.out.println("------------------------------------------------------");
+            System.out.print("コピーして作成されるファイルの命名規則を選んでください(「control+c」で中断)：");
+            String saveOption = scanner.nextLine();
+            if (saveOption.equals("1")) {
+                fileOrg.setFileNameFormatter(FileOrganizer.FileNameFormatters.NONE);
+                break;
+            } else if (saveOption.equals("2")) {
+                fileOrg.setFileNameFormatter(FileOrganizer.FileNameFormatters.HOUR_MINUTE_SECOND);
+                break;
+            } else {
+                System.out.println("半角数字で 「1」or「2」 を入力してください\n");
+            }
+        }
 
         fileOrg.organizeFiles();
 
